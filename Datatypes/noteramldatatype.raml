@@ -1,0 +1,31 @@
+#%RAML 1.0 DataType
+type: object
+displayName: Note
+description: Represents a note stored in the database
+
+properties:
+  id:
+    type: string
+    required: true
+    example: "101"
+
+  title:
+    type: string
+    required: true
+    minLength: 1
+    example: "ABC"
+
+  content:
+    type: string
+    required: true
+    example: "Note Description ........."
+
+  createdAt:
+    type: datetime
+    required: true
+    example: 2025-01-01T10:00:00Z
+
+  updatedAt:
+    type: datetime
+    required: true
+    example: 2025-01-02T10:00:00Z

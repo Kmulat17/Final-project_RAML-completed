@@ -1,0 +1,71 @@
+#%RAML 1.0 DocumentationItem
+title: CraftSoft MuleSoft Notes API
+content: |
+   The CraftSoft MuleSoft Notes API is designed to provide a secure and scalable interface for managing note records within a database system. This API enables authorized clients to perform full CRUD (Create, Read, Update, Delete) operations on note entries. It supports listing all notes, retrieving specific notes by ID, creating new notes, updating existing records, and deleting notes as needed. The API is built to ensure data integrity, consistent request/response structures, and reliable communication between client applications and the underlying database.
+
+   ### Key Functionalities
+
+   #### Retrieving All Notes
+   - **List All Notes:** The API allows clients to retrieve all notes stored in the database. Each returned note includes its `id`, `title`, `content`, `createdAt`, and `updatedAt` fields.
+   - **Validation:** The system ensures that the `updatedAt` field is populated (not null).
+
+   #### Retrieving a Single Note
+   - **Get Note by ID:** Clients can fetch an individual note using its unique `noteId`. The request returns full details for the matching note.
+   - **Validation:** The API ensures the `updatedAt` value is not null before returning the response.
+
+   #### Creating New Notes
+   - **Create Note:** The API enables the creation of new note entries in the database. Required fields include `id`, `title`, `content`, `createdAt`, and `updatedAt`.
+   - **Schema Validation:** Incoming requests are validated using a JSON Schema to ensure proper structure and data integrity.
+   - **Example Request Body:**
+     ```json
+     {
+       "title": "ABC",
+       "content": "Note Description ........."
+     }
+     ```
+
+   #### Updating Notes (Upsert)
+   - **Update or Create Note:** Clients can update an existing note using its `noteId`. If the specified note does not already exist, the API will create it instead. This ensures data consistency while reducing duplicate logic on the client side.
+
+   #### Deleting Notes
+   - **Delete Note:** The API allows clients to delete a specific note by providing its `noteId`. The corresponding record is permanently removed from the database.
+
+   ### Common Components
+
+   #### Authentication and Authorization
+   Access to the API is protected using authentication mechanisms such as API keys or OAuth tokens to ensure only authorized users can perform operations.
+
+   #### Endpoints
+   Defined URLs that allow access to specific functionalities of the API, such as `/api/notes` and `/api/notes/{noteId}`.
+
+   #### Data Format
+   All requests and responses use JSON as the standard data format for consistency and ease of integration.
+
+   #### Validation & Schema Enforcement
+   Incoming data is validated using JSON Schema to ensure required fields are present and properly formatted before being processed.
+
+   #### Error Handling
+   The API returns standardized HTTP status codes and clear error messages to handle the following situations:
+   - Missing required fields  
+   - Invalid note IDs  
+   - Data validation failures  
+   - Internal server errors  
+
+   #### Rate Limiting
+   Rate limiting is implemented to prevent abuse and to ensure fair usage of system resources.
+
+   ### Example Use Case
+
+   A note-taking web or mobile application integrates with the CraftSoft MuleSoft Notes API to:
+
+   - Display a list of all saved notes  
+   - Allow users to view detailed note information  
+   - Enable users to create new notes  
+   - Edit or update existing notes  
+   - Delete notes that are no longer needed  
+
+   This removes the need for the client application to interact directly with the database and ensures secure, controlled access to data.
+
+   ### Conclusion
+
+   The CraftSoft MuleSoft Notes API provides a scalable and secure solution for managing note data. By offering full CRUD functionality, schema validation, and strong error handling, the API serves as a reliable backend for any note-management application. It simplifies data access while maintaining data integrity and security standards.

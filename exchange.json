@@ -1,0 +1,13 @@
+{
+  "main": "final-project.raml",
+  "name": "Final-project",
+  "groupId": "d7cb71c5-57ca-4352-b897-0b1bf46093a9",
+  "assetId": "final-project",
+  "version": "1.0.0",
+  "classifier": "raml",
+  "tags": [],
+  "descriptorVersion": "1.0.0",
+  "organizationId": "d7cb71c5-57ca-4352-b897-0b1bf46093a9",
+  "apiVersion": "v1",
+  "originalFormatVersion": "1.0"
+}

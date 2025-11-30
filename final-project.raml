@@ -1,0 +1,138 @@
+#%RAML 1.0
+title: Final-project
+version: 1.0.0
+protocols: [HTTP, HTTPS]
+mediaType: [application/json]
+description: This API manages note records in a database by providing secure endpoints to create, retrieve, update, list, and delete notes in a consistent and reliable manner.
+documentation:
+  - !include documentation/documentation.raml
+uses:
+ lib: Library/Library.raml
+
+annotationTypes:
+  author:
+    type: string
+    description: The author of the API endpoint.
+  deprecated:
+    type: boolean
+    description: Indicates whether the API endpoint is deprecated.
+
+securitySchemes:
+  clientCredentials: !include /Security/clientCredentials.raml
+
+securedBy: [ clientCredentials ]
+
+/notes:
+  get:
+    description: |
+      List all notes stored in the database.
+      Each note returned must have a populated `updatedAt` field.
+    responses:
+      200:
+        description: Successful retrieval of notes
+        body:
+          application/json:
+            example:
+              !include /Examples/Retrieving/retrieveALLnotesexample.raml
+      500:
+        description: Internal server error
+        body:
+          application/json:
+            example:
+              {
+                "message": "An unexpected error occurred"
+              }
+    is:
+      - lib.servererrortrait
+          
+  post:
+    description: |
+      Insert a new note into the database.  
+      Required fields: `id`, `title`, `content`, `createdAt`, `updatedAt`.  
+      JSON schema is enforced for validation.
+    body:
+      application/json:
+        example:
+         !include /Examples/Creating/createNOTESexample.raml
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              !include /Examples/Creating/Sucessfullresponsexample.raml
+      400:
+        body:
+          application/json:
+            example:
+              !include /Examples/Creating/Invalidinputexample.raml
+
+    is:
+      - lib.servererrortrait           
+
+/notes/{noteId}:
+  uriParameters:
+    noteId:
+      type: string
+      description: Unique identifier of the note
+      required: true
+
+  get:
+    description: |
+      Retrieve a single note by its `noteId`.  
+      Validates that `updatedAt` is not null.
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+             !include /Examples/Retrieving/retrieveONEnoteexample.raml
+      404:
+        body:
+          application/json:
+            example:
+              !include /Examples/Retrieving/NotenotFoundexample.raml
+        
+    is:
+      - lib.servererrortrait
+
+      
+
+  put:
+    description: |
+      Update an existing note by `noteId` or create it if it does not exist (Upsert).
+    body:
+      application/json:
+        example:
+          !include /Examples/Updating/UpdateNOTESexample.raml
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              !include /Examples/Updating/notUPDATEexample.raml
+      201:
+        body:
+          application/json:
+            example:
+              !include /Examples/Creating/Sucessfullresponsexample.raml
+    is:
+      - lib.servererrortrait
+  
+
+  delete:
+    description: 
+     Delete the note associated with the provided `noteId`.
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              !include /Examples/Deleting/Notedeletedexample.raml
+      404:
+        body:
+          application/json:
+            example:
+              !include /Examples/Retrieving/NotenotFoundexample.raml
+
+    is:
+      - lib.servererrortrait         
