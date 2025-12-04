@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+    <flow name="final-project-main">
+        <http:listener path="/api/*" config-ref="HTTP_Listener_config">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="final-project-config"/>
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="final-project-console">
+        <http:listener path="/console/*" config-ref="HTTP_Listener_config">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="final-project-config"/>
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="put:\notes\(noteId):application\json:final-project-config">
+        <ee:transform doc:name="Transform Message">
+            <ee:variables>
+                <ee:set-variable variableName="noteId">attributes.uriParams.'noteId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <db:update doc:name="Update" doc:id="6e98ae5f-d8d4-46de-bc77-02b3d774c8a6" config-ref="Database_Config">
+			<db:sql ><![CDATA[ UPDATE finalproject.notes
+        SET
+            title = :title,
+            content = :content,
+            updatedAt = NOW()
+        WHERE id = :id;
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+        id: attributes.uriParams.noteId,
+        title: payload.title,
+        content: payload.content
+    }]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Note updated successfully"
+} ]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="delete:\notes\(noteId):final-project-config">
+        <ee:transform doc:name="Transform Message">
+            <ee:variables>
+                <ee:set-variable variableName="noteId">attributes.uriParams.'noteId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <db:delete doc:name="Delete" doc:id="a11b48db-bd9e-49e4-9bb2-ad08a3c91d0b" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE FROM finalproject.notes
+WHERE id = :id;
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id:attributes.uriParams.noteId
+}]]]></db:input-parameters>
+		</db:delete>
+		<choice doc:name="Choice" doc:id="398f8cc2-e251-4e99-af74-0ed56999f598" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Note " ++ (vars.noteId) ++ " deleted successfully"
+} ]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="f49d2119-2ff5-47a9-bf67-db197d144b10">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"MSG": "NOTE NOT FOUND! "
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="get:\notes:final-project-config">
+		<db:select doc:name="Select" doc:id="f8a323eb-a07a-4570-92f9-a1610738be99" config-ref="Database_Config">
+				<db:sql><![CDATA[SELECT * FROM finalproject.notes;]]></db:sql>
+			</db:select>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="62d2e2df-9177-421b-a1ac-4385bb652347" variableName="dbpayload"/>
+		<ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.dbpayload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\notes\(noteId):final-project-config">
+        <ee:transform doc:name="Transform Message">
+            <ee:variables>
+                <ee:set-variable variableName="noteId">attributes.uriParams.'noteId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <db:select doc:name="Select" doc:id="4abec607-61f0-44a7-b3d7-8fa6ed2dc736" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM finalproject.notes Where id =:id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id:attributes.uriParams.noteId
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="728dbe91-ea43-4dbc-84f4-46fa850b7270" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<ee:transform doc:name="Transform Message" doc:id="b429b167-fcfa-48dd-8340-94fad1196b53" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="7cb7198c-c7e0-453d-8085-dee2ac917b81" type="NOTE:NOT_FOUND" description="Note with this ID does not exist"/>
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="post:\notes:application\json:final-project-config">
+		<ee:transform doc:name="Transform Message" doc:id="bf694807-c020-4a45-b685-fda4d58b7bfd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+var currentTime = (now() as String { format: "yyyy-MM-dd HH:mm:ss" })
+
+---
+{
+    title: payload.title,
+    content: payload.Content,
+    createdAt: currentTime,
+    updatedAt: currentTime
+}
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="8677ccea-b3e5-4c19-b69b-af77c145761f" variableName="payload" />
+		<flow-ref doc:name="Flow Reference" doc:id="64a6936a-9d2d-48d1-a3b7-2e476cf8134e" name="final-projectSub_Flow"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="8f67db26-9775-4b42-adb5-06166dc66aaa" >
+			<route >
+				<db:insert doc:name="Insert" doc:id="eabfd847-1d66-4ea5-8865-289ef32f0ec1" config-ref="Database_Config">
+			<db:sql><![CDATA[Insert into finalproject.notes(title, content, createdAt, updatedAt)
+Values(:title, :content, :createdAt, :updatedAt)]]></db:sql>
+			<db:input-parameters><![CDATA[#[vars.payload]]]></db:input-parameters>
+		</db:insert>
+			</route>
+			<route >
+				<jms:publish doc:name="Publish" doc:id="7cce5d69-8dcb-47af-b73b-d57e63209f0e" config-ref="JMS_Config" destination="Database-notes" />
+			</route>
+			<route >
+				<file:write doc:name="Write" doc:id="91ad6c41-a914-4026-a17b-3dc61cea7d84" path="#['C:\Users\Herme\OneDrive\Desktop\Note-data' ++ now() as String {format:'yyyy-MM-dd-hh-mm-ss'} ++ random() * 1000 ++ '.json']" mode="CREATE_NEW"/>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Note created successfully"
+} ]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+	<sub-flow name="final-projectSub_Flow" doc:id="e72b8801-a191-428a-b7a6-859d6d482224" >
+		<ee:transform doc:name="Transform Message" doc:id="7864cf01-486e-44a5-966e-dcf3b5552454" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+var currentTime = (now() as String { format: "yyyy-MM-dd HH:mm:ss" })
+---
+[{
+	Name: payload.title,
+	CreatedDate: currentTime,
+	notes__c: payload.Content
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create" doc:id="fc7ece6f-1a98-4bf7-940f-d3bc8b572d77" config-ref="Salesforce_Config" type="NOTE__c" />
+	</sub-flow>
+</mule>

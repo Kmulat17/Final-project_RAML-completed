@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="228e203b-41cd-4085-b91a-6d7af683c29b" >
+		<http:listener-connection host="${secure::http.host}" port="${secure::http.port}" />
+	</http:listener-config>
+	<apikit:config outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" doc:name="Router" doc:id="a97ec6cb-8888-405e-8734-9b0eccddf78f" name="final-project-config" api="resource::d7cb71c5-57ca-4352-b897-0b1bf46093a9:final-project:1.0.0:raml:zip:final-project.raml"/>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="780b5160-b26e-4d9f-b0b2-0719d2ee9478" >
+		<db:my-sql-connection host="${secure::db.host}" port="${secure::db.port}" user="${secure::db.user}" password="${secure::db.password}" />
+	</db:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="c597f686-dff6-468c-8407-26a464462f61" file="names.properties" key="note" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="268fe11f-f84e-4835-b449-034496012c21" >
+		<jms:active-mq-connection username="${secure::jms.username}" password="${secure::jms.password}" >
+			<jms:caching-strategy >
+				<jms:no-caching />
+			</jms:caching-strategy>
+			<jms:factory-configuration brokerUrl="${secure::jms.broker_url}" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="d8894fa1-1a63-4eb4-9335-ce944e2175c3" >
+		<salesforce:basic-connection username="${secure::sf.username}" password="${secure::sf.password}" securityToken="${secure::sf.securitytoken}" />
+	</salesforce:sfdc-config>
+</mule>
