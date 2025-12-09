@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<sub-flow name="Final-project-POST" doc:id="4aeb4692-4dc5-4398-8084-ebe9fb4f23a7" >
+		<try doc:name="Try" doc:id="d5029138-8b1d-4f77-bdcc-11aa09451bb5" >
+			<scatter-gather doc:name="Scatter-Gather" doc:id="d8e4a617-b52c-43ca-9a4c-5376c362dd7a">
+			<route>
+				<until-successful maxRetries="5" doc:name="Until Successful" doc:id="7581089f-801e-4312-a318-2a6a550aef4b">
+					<db:insert doc:name="Insert" doc:id="6ac5dfe3-4d2a-44c3-bc4c-03321c1ddb16" config-ref="Database_Config">
+					<db:sql><![CDATA[Insert into finalproject.notes(title, content, createdAt, updatedAt)
+Values(:title, :content, :createdAt, :updatedAt)]]></db:sql>
+					<db:input-parameters><![CDATA[#[vars.payload]]]></db:input-parameters>
+				</db:insert>
+				</until-successful>
+			</route>
+			<route>
+				<jms:publish doc:name="Publish" doc:id="61f221eb-b1fa-4bdb-9d71-e09ef628eb79" config-ref="JMS_Config" destination="Database-notes">
+					<jms:message>
+						<jms:body><![CDATA[#[vars.payload]]]></jms:body>
+					</jms:message>
+				</jms:publish>
+			</route>
+			<route>
+				<file:write doc:name="Write" doc:id="d4bc52cf-8a55-4dde-92eb-0a433aa69d2d" path="#['C:\Craft\Note-data' ++ now() as String {format:'yyyy-MM-dd-hh-mm-ss'} ++ random() * 1000 ++ '.json']">
+					<file:content><![CDATA[#[vars.payload]]]></file:content>
+				</file:write>
+			</route>
+		</scatter-gather>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="96babca2-6e22-48b5-b33d-7ed3d03a6ff1" type="DB:CONNECTIVITY">
+					<ee:transform doc:name="Transform Message" doc:id="5fd37368-2e0e-48c8-9c69-f6b6a2695a84" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"MSG": "Database Down Please Try again! "
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="abdf1d17-8bdb-448f-a2db-f3e3f8a0ce3b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Note created successfully"
+} ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="Final-project-Get(id)" doc:id="71f92399-e479-4fb4-a8b3-a0d95843218e" >
+		<db:select doc:name="Select" doc:id="0ccb87a3-b545-4272-b629-1c9b7e495384" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM finalproject.notes Where id =:id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id:attributes.uriParams.noteId
+}]]]></db:input-parameters>
+		</db:select>
+		<try doc:name="Try" doc:id="026f2930-f639-472c-91e7-7406e6221e3c" >
+			<choice doc:name="Choice" doc:id="da753ca6-5611-4141-a89b-7a4d36c8fa6c">
+			<when expression="#[(sizeOf(payload))!=0]">
+				<ee:transform doc:name="Transform Message" doc:id="bcb88e73-665d-42d7-a967-7b70699b9a56">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<raise-error doc:name="Raise error" doc:id="f72b8ff4-9dcc-495b-92f6-622a03b46b2f" type="CRAFT:NOTE_NOT_FOUND" description='"Note with this ID does not exist"' />
+			</otherwise>
+		</choice>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d24a1bde-8d2f-4cf3-bebd-332a634515b7" >
+					<ee:transform doc:name="Transform Message" doc:id="5da326cd-68f3-4b2e-acc2-8dbffda1eebf" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="Final-project-GET-all" doc:id="33dacd4e-410a-4168-b11f-8eda303bdec9" >
+		<try doc:name="Try" doc:id="d9bc2aec-2a05-472c-b763-7ec229eeae29" >
+			<scatter-gather doc:name="Scatter-Gather" doc:id="1b00ca49-39a8-4d33-8373-c8047f3f7013">
+			<route>
+				<foreach doc:name="For Each" doc:id="7e9ad472-aee6-4425-8e24-f8b42ce88208" collection="#[vars.dbpayload]">
+			<salesforce:create doc:name="Create" doc:id="26327b26-4a65-48bb-baa6-ee796e5ceb83" config-ref="Salesforce_Config" type="NOTE__c">
+				<salesforce:records><![CDATA[#[%dw 2.0
+output application/json
+---
+[
+  {
+    Name: payload.id as String,
+    content__c: payload.content,
+    createdAt__c: payload.createdAt,
+    title__c: payload.title,
+    updataedAt__c: payload.updatedAt
+  }
+]]]]></salesforce:records>
+			</salesforce:create>
+		</foreach>
+			</route>
+				<route >
+					<foreach doc:name="For Each" doc:id="26754c41-4bbe-445d-b16c-821bf43c542c" collection="#[vars.dbpayload]">
+						<file:write doc:name="Write" doc:id="4ef3725a-4d17-401c-b569-4e123f63522a" path="#['C:\Craft\Note-data' ++ (now() as String {format:'yyyy-MM-dd-hh-mm-ss'} ) ++ '.json']">
+					<file:content><![CDATA[#[%dw 2.0
+output application/json
+---
+vars.dbpayload]]]></file:content>
+				</file:write>
+					</foreach>
+				</route>
+		</scatter-gather>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="755354fe-1b1c-4da6-879d-8e1ae0371926" >
+					<ee:transform doc:name="Transform Message" doc:id="1bd4ad78-42ab-4e42-a089-4eb2006636c5" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="2fc34573-85e0-476c-8429-fc7b28896a44">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="Final-project-PUT" doc:id="71d93cbe-6a25-4d49-8863-e0eaecc70241" >
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="467d36e0-0f97-4153-9840-92dd0e1260a7" variableName="requestBody"/>
+		<ee:transform doc:name="Transform Message" doc:id="c14d1181-eda1-4ee8-9738-28237488e6f1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  id: attributes.uriParams.noteId,
+  title: vars.requestBody.title,
+  content: vars.requestBody.content
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:update doc:name="Update" doc:id="7ac28ace-a857-471b-8fc6-c5fed4931a75" config-ref="Database_Config">
+					<db:sql><![CDATA[UPDATE finalproject.notes
+SET
+    title=:title,
+    content=:content,
+    updatedAt=NOW()
+WHERE id=:id
+]]></db:sql>
+					<db:input-parameters><![CDATA[#[payload]]]></db:input-parameters>
+				</db:update>
+		<choice doc:name="Choice" doc:id="38b5af9e-691c-4c47-ae62-9e136e7accac" >
+			<when expression="#[(payload.affectedRows default 0) == 0]">
+				<db:insert doc:name="Insert" doc:id="899a8768-f1ec-4009-801a-7ffaccbddbf6" config-ref="Database_Config">
+					<db:sql><![CDATA[Insert into finalproject.notes(title, content, createdAt, updatedAt)
+Values(:title, :content, :createdAt, :updatedAt)]]></db:sql>
+					<db:input-parameters><![CDATA[#[%dw 2.0
+output application/json
+
+var currentTime = (now() as String { format: "yyyy-MM-dd HH:mm:ss" })
+
+---
+{
+    title:vars.requestBody.title,
+    content:vars.requestBody.content,
+    createdAt: currentTime,
+    updatedAt: currentTime
+}]]]></db:input-parameters>
+				</db:insert>
+				<ee:transform doc:name="Transform Message" doc:id="6b4953a5-bca1-4b10-ba7e-4cbed983fdb7">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Note created successfully"
+} ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="f63f9c5b-d028-4193-8773-d57f63618d3c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"MSG": "NOTE Updated successfully"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>		
+</mule>

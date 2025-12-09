@@ -1,9 +1,0 @@
-%dw 2.0
-
-type auto_e72b8801_a191_428a_b7a6_859d6d482224_Input_Variables_payload = {|
-  createdAt?: String, 
-  title?: String, 
-  content?: String, 
-  updatedAt?: String
-|}
-
