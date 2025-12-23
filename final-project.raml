@@ -133,6 +133,20 @@ securedBy: [ clientCredentials ]
           application/json:
             example:
               !include /Examples/Retrieving/NotenotFoundexample.raml
+  put:
+    description: Update or create note
+    body:
+      application/json:
+        type: NoteCreate
+    responses:
+      200:
+        body:
+          application/json:
+            type: Note
+  delete:
+    description: Delete note by id
+    responses:
+      204:
 
     is:
       - lib.servererrortrait         
